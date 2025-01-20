@@ -1,0 +1,92 @@
+---
+output:
+  html_document: 
+    includes:
+      in_header: ga.html
+---
+# Transformaciones
+
+La mayoría de las series de tiempo no son débilmente estacionarias, es decir que no muestran una media ni una varianza constantes a lo largo del tiempo y pueden mostrar tendencias crecientes o bien, decrecientes. Para poder trabajar con este tipo de series de una forma más sencilla y manejable, existen métodos para transformarlas y verlas como realizaciones de una serie de tiempo débilmente estacionaria. Las transformaciones más comunes son el suavizamiento a través de medias móviles o ajustando polinomios a la serie en cuestión, la diferenciación.
+
+## Suavizamiento por medias móviles
+
+Se mencionó que las series de tiempo se pueden ver como la suma de tres componentes: una tendencia, una estacionalidad y una componente aleatorio o irregular. Ahora bien, en este método de suavizamiento el objetivo es estimar y extraer **la tendencia** $\left(T_t\right)$ del modelo. Lo anterior se puede realizar estimando la tendencia con: 
+
+$$
+\hat T_t=(2q+1)^{-1}\sum_{j=-q}^q X_{t-j},\space q+1\leq t\leq n-q
+$$
+
+Este es uno de mucho filtros lineales que podrían aplicarse ($\hat T_t=\sum_{j=-\infty}^\infty a_jX_{t-j}$). Obsérvese que para valores grandes de $q$, $(2q+1)^{-1}\sum_{j=-q}^q [X_{t-j}-\hat T_t]\approx 0$, lo cual no sólo atenúa el ruido, también permite que la tendencia lineal $T_t=c_0+c_1t$ pase sin distorsión. Sin embargo hay que tener cuidado en la selección de $q$, ya que valores muy grandes, si $T_t$ no es lineal, entonces se suavizará la serie pero la estimación de la tendencia será mala.
+
+## Suavizamiento por polinomios ajustados
+
+En este método de suavizamiento el objetivo es estimar y extraer la **tendencia** ($T_t$) y la **estacionalidad** ($E_t$) del modelo. Si $E_t= 0$, se tiene un caso de no estacionariedad simple, por lo que el proceso tiene un comportamiento estacionario alrededor de la tendencia y para estimar $T_t$ se supone que tiene la siguiente forma:
+
+$$
+T_t = a_0 + a_1t +... + a_pt^p
+$$
+
+Si se tiene $p = 1$ la tendencia es lineal, si $p = 2$ la tendencia es cuadrática.
+
+Los parámetros $a_i$ se estiman mediante mínimos cuadrados ordinarios, es decir que minimicen $\sum_{i=1}^n (x_i-T_i)^2$.
+
+## Diferencias de Box-Jenkins
+
+Consiste en aplicar diferencias a la serie de tiempo estudiada hasta que las observaciones se perciban como componentes de una serie débilmente estacionaria. Se definen los siguientes operadores para este método: 
+
+El **operador de retraso** se denota con una letra $B$ o $\mathcal{L}$ y se define como el valor retrasado de una serie de tiempo temporal, indicado con el exponente del operador la cantidad de retrasos. De manera particular se tiene $BX_t = X_{t-1}$, por lo que si se aplica varias veces el operador, la serie se retardaría $k$-unidades temporales:
+
+$$
+B^kX_t=X_{t-k}
+$$
+
+En particular $B^0X_t=X_t$. Por lo que se podría utilizar notación polinómica para expresar el operador de retraso:
+
+$$
+\phi(B)X_t = \left(\phi_0+\phi_1B+\phi_2B^2\right)X_t = \phi_0X_t+\phi_1X_{t-1}+\phi_2X_{t-2} 
+$$
+
+El **operador diferencia** se expresa con $\nabla$ y se define como la diferencia entre el valor al periodo $t$ y valor rezagado $k$ periodos. Para $k=1$ se define como $\nabla X_t=X_t-X_{t-1}$. Para $k=2$ se tendría la diferencia de las diferencias de un rezago.
+
+$$
+\nabla^2X_t=\nabla X_t-\nabla X_{t-1}=(X_t-X_{t-1})-(X_{t-1}-X_{t-2})
+$$ 
+Y asi sucesivamente según vaya aumentando el valor de $k$.
+
+Ambos operadores se relacionan de la siguiente manera: 
+
+$$
+\nabla Z_t=Z_t-Z_{t-1}=Z_t-BZ_t=(1-B)Z_t
+$$
+Teniendo que $\nabla=(1-B)$
+
+Si aplicamos el operador diferencia sucesivamente entonces se obtiene:
+
+
+$$
+\begin{array}{cc}
+\nabla^k=(1-B)^k; & \nabla^kX_t=\sum_{j=0}^k\frac{k!}{j!(k-j)!}(-1)^jX_{t-j}
+\end{array}
+$$
+
+Ejemplos del uso de estas y otras transformaciones se puede ver en el la sección [Transformaciones](https://rstudio-pubs-static.s3.amazonaws.com/1071417_253bc2f164f4438b918aaaee3a3da291.html#transformaciones) del blog, aunque se recomienda su lectura después de estudiar los modelos ARIMA. En el capítulo 9 se hará mención de este contenido nuevamente.
+
+## Ejercicios
+
+1. ¿Cuáles son las razones por las que se sugiere aplicar transformaciones como  suavizamiento a través de medias móviles o diferenciación a las series de tiempo?
+
+2. En el siguiente [enlace](https://a-little-book-of-r-for-time-series.readthedocs.io/en/latest/src/timeseries.html) podrás obtener datos con el número de nacimientos por mes en la ciudad de Nueva York, desde enero de 1946 hasta diciembre de 1959, así como el código para la creación de un objeto de serie de tiempo en R adecuado para estos datos.Realiza los siguientes incisos:
+
+a) Compara la serie de tiempo de los nacimientos, gráficamente, con las diferencias de los valores de la serie en 1 rezago. Para esto se sugiere utilizar la función `diff()`. ¿Qué puedes decir de las series de tiempo? ¿Cuál de las series tiene un comportamiento más estacionario? ¿Qué harías para que la serie original aumentará su estacionariedad? ¿Qué pasa si aumentamos el número de rezagos en las diferencias?
+
+b) Utiliza la función `decompose()` en ambas series de tiempo y anota tus conclusiones (en el enlace de descarga de los datos vienen algunas conclusiones técnicas sobre la serie original, puedes tomarlas como referencia y dar otros puntos relevantes. Trata de dar conclusiones técnicas y no técnicas). ¿Existen periodos interesantes en los que se dan ciertos patrones?
+
+c) Muestra visualmente la autocorrelación y la autocorrelación parcial de ambas series de tiempo y otorga comentarios generales. ¿Las funciones de autocorrelación muestran que al utilizar diferencias obtenemos un comportamiento estacionario? ¿Tenemos en algún caso un comportamiento similar a una caminata aleatoria o al ruido blanco? ¿Existe alguna diferencia relevante si aumentamos el número de rezagos en las diferencias?
+
+d) Con al función `forecast::ma())` puedes suavizar la serie de tiempo con el método de medias móviles. Realiza el análisis que necesites y concluye si tiene un gran impacto a favor el suavizar la serie de tiempo original. ¿Es mejor suavizar que al utilizar la diferencia entre las observaciones?
+
++ Recomendaciones: Utiliza la función `autoplot()` del paquete `forecast` en objetos de series de tiempo y el resultado de la función `decompose()` como si fuera la función `plot()`. Obtendrás un objeto ggplot que tendrá mayor versatilidad para su edición. Además, te recomendamos utilizar las funciones `ggAcf()` y `ggPacf()` del mismo paquete para el análisis de autocorrelación.
+
+3. Con los datos seleccionados para las prácticas 
+c. Aplique la función decompose a los datos y describa los hallazgos. ¿Qué puede concluir además de los hallazgos técnicos?
+d. Grafique la serie de los logaritmos de los datos y describa el cambio observado respecto a lo visto en el inciso b) del ejercicio 2.1.4 ¿El gráfico sugiere que un modelo estacionario podría ser apropiado para los logaritmos?
